@@ -150,14 +150,22 @@
       return String(s).replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;");
     }
 
-    function addMessageToUI(type, who, text) {
-      const div = document.createElement("div");
-      div.className = "msg " + type;
-      div.innerHTML = `<b>${escapeHtml(who)}:</b> ${escapeHtml(text)}`;
-      messagesEl.appendChild(div);
-      messagesEl.scrollTop = messagesEl.scrollHeight;
-    }
+    function formatTextForHtml(text) {
+  // escape first
+  let safe = escapeHtml(text);
 
+  // turn URLs into clickable links (optional but nice)
+  safe = safe.replace(
+    /(https?:\/\/[^\s]+)/g,
+    `<a href="$1" target="_blank" rel="noopener">$1</a>`
+  );
+
+  // convert newlines to <br>
+  safe = safe.replaceAll("\n", "<br>");
+
+  // make simple bullet points look nicer
+  // lines starting with "- " or "• " will get a
+      
     function loadHistory() {
       try {
         const raw = localStorage.getItem(STORAGE_KEY);
