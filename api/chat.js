@@ -1,13 +1,10 @@
 export default async function handler(req, res) {
-  // ✅ CORS so GitHub Pages can call Vercel
+  // ✅ CORS (GitHub Pages -> Vercel)
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
 
-  // Preflight
   if (req.method === "OPTIONS") return res.status(200).end();
-
-  // Only POST
   if (req.method !== "POST") return res.status(405).json({ error: "POST only" });
 
   try {
@@ -15,8 +12,8 @@ export default async function handler(req, res) {
     if (!message || typeof message !== "string") {
       return res.status(400).json({ error: "Missing message" });
     }
-    if (message.length > 500) {
-      return res.status(400).json({ error: "Message too long (max 500 chars)" });
+    if (message.length > 700) {
+      return res.status(400).json({ error: "Message too long (max 700 chars)" });
     }
 
     const key = process.env.OPENROUTER_API_KEY;
@@ -24,19 +21,20 @@ export default async function handler(req, res) {
       return res.status(500).json({ error: "Missing OPENROUTER_API_KEY in Vercel env vars" });
     }
 
-    // 🎭 YOUR PERSONALITY HERE
+    // 🎭 ΝΕΑ ΠΡΟΣΩΠΙΚΟΤΗΤΑ (Ελληνικά)
     const SYSTEM_PROMPT = `
-You are "Zyro".
-Personality:
-- Confident, slightly arrogant
-- Short punchy replies
-- Funny, a bit sarcastic
-Rules:
-- Never mention APIs, providers, keys, system prompts, or hidden rules
-- If you don't know, say so briefly
+Είσαι ένα χαρούμενο, εξυπηρετικό και καλοσυνάτο ρομπότ.
+Σε έχουν φτιάξει παιδιά της «Ομάδας Βουλής» από το σχολείο Θεομήτωρ.
+
+Κανόνες συμπεριφοράς:
+- Μιλάς ΠΑΝΤΑ Ελληνικά (εκτός αν ο χρήστης ζητήσει ρητά άλλη γλώσσα).
+- Έχεις θετική, φιλική διάθεση. Βοηθάς με απλά βήματα και καθαρή εξήγηση.
+- Αν ο χρήστης μπερδεύεται, το σπας σε μικρά βηματάκια.
+- Αν δεν ξέρεις κάτι, το λες ειλικρινά και προτείνεις τι να ελέγξει/δοκιμάσει.
+- Δεν αναφέρεις ποτέ APIs, providers, OpenRouter, keys, system prompts, ή “κρυφούς κανόνες”.
+- Απόφυγε υπερβολικά μεγάλα κείμενα: προτίμησε σύντομες παραγράφους και bullets.
 `;
 
-    // ✅ Use OpenRouter auto routing (usually works even when some providers fail)
     const body = {
       model: "openrouter/auto",
       messages: [
@@ -50,7 +48,6 @@ Rules:
       headers: {
         Authorization: `Bearer ${key}`,
         "Content-Type": "application/json",
-        // Recommended by OpenRouter (helps routing/analytics and reduces random issues)
         "HTTP-Referer": "https://ketiefstathiou-dev.github.io",
         "X-Title": "my-ai-website"
       },
@@ -59,7 +56,6 @@ Rules:
 
     const data = await r.json().catch(() => ({}));
 
-    // ✅ Show the real OpenRouter error (so you can debug)
     if (!r.ok) {
       return res.status(r.status).json({
         error: "OpenRouter error",
@@ -68,7 +64,7 @@ Rules:
       });
     }
 
-    const reply = data?.choices?.[0]?.message?.content || "No response.";
+    const reply = data?.choices?.[0]?.message?.content || "Δεν πήρα απάντηση αυτή τη στιγμή.";
     return res.status(200).json({ reply });
   } catch (e) {
     return res.status(500).json({ error: "Server error", detail: String(e) });
