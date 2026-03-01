@@ -1,49 +1,294 @@
 <!DOCTYPE html>
-<html>
+<html lang="el">
 <head>
   <meta charset="utf-8" />
-  <title>My AI</title>
-  <style>
-    body { font-family: Arial, sans-serif; background:#111; color:#fff; margin:0; }
-    h1 { text-align:center; margin:18px 0; }
-    #chatbox { width:92%; max-width:720px; margin:0 auto 24px; }
-    #messages {
-      background:#1a1a1a; border:1px solid #2a2a2a;
-      border-radius:12px; padding:14px;
-      min-height:320px; max-height:55vh; overflow-y:auto;
-      white-space:pre-wrap; word-wrap:break-word;
-    }
-    .msg { margin:10px 0; line-height:1.35; }
-    .you b { color:#8bd3ff; }
-    .ai b { color:#b7ff8b; }
-    .err b { color:#ff8b8b; }
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Θεομήτωρ Bot</title>
 
-    .row { display:flex; gap:10px; margin-top:12px; }
-    input {
-      flex:1; padding:12px; border-radius:10px;
-      border:1px solid #2a2a2a; outline:none;
-      background:#0f0f0f; color:#fff; font-size:15px;
+  <style>
+    :root{
+      --bg1:#07130c;
+      --bg2:#0b1d12;
+      --card:#0f1a14cc;
+      --border:#2a3b31;
+      --text:#eef7f0;
+      --muted:#b7c7bc;
+      --accent:#9ff0b2;
+      --accent2:#ffb7d9;
+      --shadow: 0 18px 60px rgba(0,0,0,.55);
+      --radius: 18px;
     }
-    button {
-      padding:12px 14px; border-radius:10px; border:0;
-      cursor:pointer; background:#2d2d2d; color:#fff; font-size:15px;
+
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Noto Sans", "Helvetica Neue", sans-serif;
+      color:var(--text);
+      background:
+        radial-gradient(1200px 700px at 20% 10%, rgba(159,240,178,.18), transparent 60%),
+        radial-gradient(900px 600px at 80% 15%, rgba(255,183,217,.14), transparent 55%),
+        radial-gradient(1000px 700px at 50% 90%, rgba(140,210,255,.10), transparent 55%),
+        linear-gradient(180deg, var(--bg1), var(--bg2));
+      min-height:100vh;
+      overflow-x:hidden;
     }
-    button:disabled { opacity:.6; cursor:not-allowed; }
-    #status { text-align:center; margin-top:10px; font-size:13px; opacity:.85; }
+
+    /* Blossom side “trees” using CSS only (no images) */
+    .scene{
+      position:fixed;
+      inset:0;
+      pointer-events:none;
+      z-index:0;
+      overflow:hidden;
+    }
+
+    .trunk{
+      position:absolute;
+      top:-5vh;
+      bottom:-10vh;
+      width: 240px;
+      opacity:.55;
+      filter: blur(.2px);
+    }
+    .trunk.left{ left:-90px; transform: rotate(-2deg); }
+    .trunk.right{ right:-90px; transform: scaleX(-1) rotate(-2deg); }
+
+    .trunk::before{
+      content:"";
+      position:absolute;
+      inset:0;
+      background:
+        /* tree bark */
+        repeating-linear-gradient(
+          90deg,
+          rgba(55,35,25,.75),
+          rgba(55,35,25,.75) 10px,
+          rgba(35,22,16,.75) 10px,
+          rgba(35,22,16,.75) 20px
+        );
+      border-radius: 140px;
+      box-shadow: inset 0 0 50px rgba(0,0,0,.45);
+    }
+
+    /* blossom canopy */
+    .canopy{
+      position:absolute;
+      top:-80px;
+      left:-60px;
+      right:-60px;
+      height: 55%;
+      background:
+        radial-gradient(circle at 20% 30%, rgba(255,183,217,.55), transparent 45%),
+        radial-gradient(circle at 55% 25%, rgba(255,183,217,.45), transparent 48%),
+        radial-gradient(circle at 80% 35%, rgba(255,183,217,.50), transparent 46%),
+        radial-gradient(circle at 35% 55%, rgba(255,210,230,.38), transparent 52%),
+        radial-gradient(circle at 70% 60%, rgba(255,210,230,.30), transparent 55%);
+      filter: blur(0.4px);
+      opacity:.9;
+    }
+
+    /* falling petals */
+    .petal{
+      position:absolute;
+      width: 10px;
+      height: 8px;
+      background: radial-gradient(circle at 30% 30%, rgba(255,255,255,.7), rgba(255,183,217,.95) 40%, rgba(255,120,185,.5));
+      border-radius: 70% 30% 70% 30% / 60% 40% 60% 40%;
+      opacity:.85;
+      animation: fall linear infinite;
+      filter: blur(.15px);
+    }
+
+    @keyframes fall{
+      0%{ transform: translateY(-10vh) translateX(0) rotate(0deg); opacity:0; }
+      10%{ opacity:.85; }
+      100%{ transform: translateY(110vh) translateX(120px) rotate(380deg); opacity:0; }
+    }
+
+    /* layout */
+    .wrap{
+      position:relative;
+      z-index:1;
+      padding: 32px 14px 40px;
+      max-width: 980px;
+      margin: 0 auto;
+    }
+
+    .header{
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap:12px;
+      margin-bottom: 14px;
+      text-align:center;
+    }
+    .logo{
+      width:46px;height:46px;
+      border-radius: 14px;
+      background:
+        radial-gradient(circle at 30% 30%, rgba(255,183,217,.95), transparent 55%),
+        radial-gradient(circle at 70% 70%, rgba(159,240,178,.75), transparent 55%),
+        rgba(15,26,20,.7);
+      border:1px solid rgba(255,255,255,.12);
+      box-shadow: var(--shadow);
+    }
+    h1{
+      margin:0;
+      font-size: clamp(20px, 3.3vw, 30px);
+      letter-spacing:.2px;
+    }
+    .sub{
+      margin:6px 0 0;
+      color:var(--muted);
+      font-size: 14px;
+    }
+
+    .card{
+      background: var(--card);
+      border:1px solid rgba(255,255,255,.10);
+      border-color: rgba(255,255,255,.12);
+      box-shadow: var(--shadow);
+      border-radius: var(--radius);
+      overflow:hidden;
+      backdrop-filter: blur(10px);
+    }
+
+    .topbar{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      padding: 12px 14px;
+      border-bottom: 1px solid rgba(255,255,255,.08);
+    }
+    .badge{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.10);
+      font-size: 13px;
+      color: var(--muted);
+    }
+    .dot{
+      width:10px;height:10px;border-radius:50%;
+      background: #41ff8b;
+      box-shadow: 0 0 12px rgba(65,255,139,.35);
+    }
+    .hint{
+      font-size: 13px;
+      color: var(--muted);
+      opacity:.95;
+    }
+
+    #messages{
+      padding: 14px;
+      height: min(56vh, 520px);
+      overflow-y:auto;
+      text-align:left;
+    }
+
+    .msg{
+      margin: 10px 0;
+      line-height: 1.4;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+    }
+    .msg b{ font-weight: 700; }
+    .you b{ color: #8bd3ff; }
+    .ai b{ color: var(--accent); }
+    .err b{ color: #ff8b8b; }
+
+    .composer{
+      display:flex;
+      gap:10px;
+      padding: 12px;
+      border-top: 1px solid rgba(255,255,255,.08);
+      background: rgba(0,0,0,.12);
+    }
+    input{
+      flex:1;
+      padding: 12px 12px;
+      border-radius: 14px;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(10,14,12,.55);
+      color: var(--text);
+      outline:none;
+      font-size: 15px;
+    }
+    input:focus{
+      border-color: rgba(159,240,178,.45);
+      box-shadow: 0 0 0 4px rgba(159,240,178,.12);
+    }
+    button{
+      padding: 12px 14px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.14);
+      background:
+        linear-gradient(135deg, rgba(159,240,178,.22), rgba(255,183,217,.18));
+      color: var(--text);
+      cursor:pointer;
+      font-size: 15px;
+      min-width: 92px;
+      transition: transform .08s ease, opacity .15s ease;
+    }
+    button:hover{ transform: translateY(-1px); }
+    button:disabled{ opacity:.55; cursor:not-allowed; transform:none; }
+
+    #status{
+      padding: 10px 14px;
+      text-align:center;
+      font-size: 13px;
+      color: var(--muted);
+      opacity:.95;
+    }
+
+    @media (max-width:520px){
+      .badge{ display:none; }
+      button{ min-width: 80px; }
+      .trunk{ opacity:.42; }
+    }
   </style>
 </head>
+
 <body>
-  <h1>My AI</h1>
+  <!-- background scene -->
+  <div class="scene" aria-hidden="true">
+    <div class="trunk left">
+      <div class="canopy"></div>
+    </div>
+    <div class="trunk right">
+      <div class="canopy"></div>
+    </div>
+    <!-- petals injected by JS -->
+  </div>
 
-  <div id="chatbox">
-    <div id="messages"></div>
-
-    <div class="row">
-      <input id="input" placeholder="Say something..." autocomplete="off" />
-      <button id="sendBtn">Send</button>
+  <div class="wrap">
+    <div class="header">
+      <div class="logo"></div>
+      <div>
+        <h1>Θεομήτωρ Bot</h1>
+        <div class="sub">Χαρούμενο ρομπότ από τα παιδιά της Ομάδας Βουλής 🩷🌿</div>
+      </div>
     </div>
 
-    <div id="status">Ready.</div>
+    <div class="card">
+      <div class="topbar">
+        <div class="badge"><span class="dot"></span> Online</div>
+        <div class="hint">Γράψε κάτι και πάτα “Αποστολή”.</div>
+      </div>
+
+      <div id="messages"></div>
+
+      <div class="composer">
+        <input id="input" placeholder="Π.χ. 'Μπορείς να μου εξηγήσεις αυτό;'" autocomplete="off" />
+        <button id="sendBtn">Αποστολή</button>
+      </div>
+
+      <div id="status">Έτοιμο.</div>
+    </div>
   </div>
 
   <script>
@@ -56,7 +301,10 @@
     const statusEl = document.getElementById("status");
 
     function escapeHtml(s) {
-      return String(s).replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
+      return String(s)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;");
     }
 
     function addMessage(type, who, text) {
@@ -71,12 +319,12 @@
       const userMessage = inputEl.value.trim();
       if (!userMessage) return;
 
-      addMessage("you", "You", userMessage);
+      addMessage("you", "Εσύ", userMessage);
       inputEl.value = "";
       inputEl.focus();
 
       sendBtn.disabled = true;
-      statusEl.textContent = "Thinking...";
+      statusEl.textContent = "Σκέφτομαι...";
 
       try {
         const response = await fetch(API_URL, {
@@ -88,16 +336,15 @@
         const data = await response.json().catch(() => ({}));
 
         if (!response.ok) {
-          // Show detailed server error so you can fix it fast
           const details = data.details ? JSON.stringify(data.details) : "";
-          addMessage("err", "Error", (data.error || ("HTTP " + response.status)) + (details ? ("\n" + details) : ""));
-          statusEl.textContent = "Error.";
+          addMessage("err", "Σφάλμα", (data.error || ("HTTP " + response.status)) + (details ? ("\n" + details) : ""));
+          statusEl.textContent = "Κάτι πήγε στραβά.";
         } else {
-          addMessage("ai", "AI", data.reply ?? "(no reply)");
-          statusEl.textContent = "Ready.";
+          addMessage("ai", "Θεομήτωρ Bot", data.reply ?? "(χωρίς απάντηση)");
+          statusEl.textContent = "Έτοιμο.";
         }
       } catch (e) {
-        addMessage("err", "Error", "Network error: could not reach Vercel endpoint.");
+        addMessage("err", "Σφάλμα", "Δε μπορώ να συνδεθώ στον server αυτή τη στιγμή.");
         statusEl.textContent = "Offline.";
       } finally {
         sendBtn.disabled = false;
@@ -109,7 +356,27 @@
       if (e.key === "Enter") sendMessage();
     });
 
-    addMessage("ai", "AI", "I’m online. Say something.");
+    // Welcome message
+    addMessage("ai", "Θεομήτωρ Bot", "Γεια σου! 🤖🌸 Είμαι το ρομπότ που έφτιαξαν τα παιδιά της Ομάδας Βουλής από το σχολείο Θεομήτωρ. Πώς μπορώ να βοηθήσω;");
+
+    // Petals (pure CSS shapes)
+    const scene = document.querySelector(".scene");
+    const petalCount = 26;
+    for (let i = 0; i < petalCount; i++) {
+      const p = document.createElement("div");
+      p.className = "petal";
+      const left = Math.random() * 100;
+      const dur = 6 + Math.random() * 8;        // 6–14s
+      const delay = -Math.random() * dur;       // start mid-animation
+      const size = 7 + Math.random() * 10;      // 7–17px
+      p.style.left = left + "vw";
+      p.style.animationDuration = dur + "s";
+      p.style.animationDelay = delay + "s";
+      p.style.width = size + "px";
+      p.style.height = (size * 0.8) + "px";
+      p.style.opacity = (0.55 + Math.random() * 0.35).toFixed(2);
+      scene.appendChild(p);
+    }
   </script>
 </body>
 </html>
